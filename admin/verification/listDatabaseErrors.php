@@ -1585,7 +1585,7 @@ if($active_all || in_array('expected_terms', $active)) {
                 */
                 if(  !in_array($row['dtl_ID'], $dtl_ids) &&  //already non existant
                 trim($row['dtl_Value'])!="" 
-    && !VerifyValue::isValidTerm($row['dty_JsonTermIDTree'],null, $row['dtl_Value'], $row['dty_ID'] )) 
+    && !VerifyValue::isValidTerm($row['dtl_Value'], $row['dty_ID'], $row['dty_JsonTermIDTree'],null )) 
                 {
                     
                     //ok - term does not belong to required vocabullary

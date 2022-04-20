@@ -24,6 +24,7 @@
 * See the License for the specific language governing permissions and limitations under the License.
 */
 
+//reset - reset all cache 
 //getAllowedTerms
 //isValidTerm
 //isValidTermLabel
@@ -43,12 +44,15 @@ class VerifyValue {
     private static $initialized = false;
 
     private static $dtyIDDefs = array();  //list of allowed terms for particular detail type ID
-    private static $dtyIDDefs_labels = array();  //with hierarchy
-    private static $dtyIDDefs_labels_plain = array(); //without hierarchy
+    private static $dtyIDDefs_labels = array();  //terms by basefield with hierarchy
+    private static $dtyIDDefs_labels_plain = array(); //terms  by basefield without hierarchy
     private static $dtyIDDefs_codes = array();
     private static $terms = null;
     private static $dbs_terms = null;
 
+    private static $detailtypes = array();
+    
+    
     private static function initialize()
     {
         if (self::$initialized)
@@ -61,111 +65,130 @@ class VerifyValue {
         self::$initialized = true;
     }
 
-
     //
     // clear all global variables
     // it is required in case database switch
     //
-    public static function reset(){
+    public static function reset($new_system=null){
         self::$dtyIDDefs = array();  //list of allowed terms for particular detail type ID
         self::$dtyIDDefs_labels = array();
         self::$dtyIDDefs_labels_plain = array();
         self::$dtyIDDefs_codes = array();
         
-        self::$terms = null;
+        self::$dtyIDDefs_codes = array();
+        
+        self::$detailtypes = array();
+        
+        if($new_system!=null){
+            self::$system = $new_system;
+            self::$mysqli = $new_system->get_mysqli();   
+            self::$initialized = true; 
+        }
+    }
+    
+    /**
+    * Loads terms defintions
+    * 
+    */
+    public static function getTerms(){
+        if(self::$terms == null){ //load definitions
+            self::$terms = dbs_GetTerms(self::$system); 
+            self::$dbs_terms = new DbsTerms(self::$system, self::$terms);
+        }  
+        return self::$dbs_terms;
     }
 
-/**
-* get all terms ids allowed for given field type
-* 
-* @param mixed $defs - array of all terms
-* @param mixed $defs_nonsel - array of disabled(header) terms
-* @param mixed $dtyID - detail type i
-*/
-public static function getAllowedTerms($defs, $defs_nonsel, $dtyID){
-    
-    self::initialize();
+    /**
+    * get all terms ids allowed for given field type
+    * 
+    * @param mixed $defs - array of all terms
+    * @param mixed $defs_nonsel - array of disabled(header) terms
+    * @param mixed $dtyID - detail type i
+    */
+    public static function getAllowedTerms($defs, $defs_nonsel, $dtyID){
 
-    $allowed_terms = null;
+        self::initialize();
 
-    if($dtyID==null || !@self::$dtyIDDefs[$dtyID]){ //detail type ID is not defined or terms are already found
-    
-        self::$system->defineConstant('DT_RELATION_TYPE');
-        
-        if ( $dtyID == DT_RELATION_TYPE) {
-            $parent_id = 'relation';
-        }else if(is_array($defs) && count($defs)==1){
-            $parent_id = $defs[0];
-        }else{
-            $parent_id = $defs;
-        }
-        if($parent_id==null || $parent_id==''){
-            $allowed_terms = 'all';
-        }else{
-            if(self::$terms == null){
-               self::$terms = dbs_GetTerms(self::$system); 
-               self::$dbs_terms = new DbsTerms(self::$system, self::$terms);
-            }  
-            $allowed_terms = self::$dbs_terms->treeData($parent_id, 3);
-        }
-        
-        self::$dtyIDDefs[$dtyID] = $allowed_terms;
-        
-/*
-        if ( $dtyID == DT_RELATION_TYPE) {
+        $allowed_terms = null;
+
+        if($dtyID==null || !@self::$dtyIDDefs[$dtyID]){ //detail type ID is not defined or terms are already found
+
+            self::$system->defineConstant('DT_RELATION_TYPE');
+
+            if ( $dtyID == DT_RELATION_TYPE) {
+                $parent_id = 'relation';
+            }else if(is_array($defs) && count($defs)==1){
+                $parent_id = $defs[0]; //vocabulary
+            }else{
+                $parent_id = $defs;
+            }
+            if($parent_id==null || $parent_id==''){
+                $allowed_terms = 'all';
+            }else{
+                if(self::$terms == null){ //load definitions
+                    self::$terms = dbs_GetTerms(self::$system); 
+                    self::$dbs_terms = new DbsTerms(self::$system, self::$terms);
+                }  
+                $allowed_terms = self::$dbs_terms->treeData($parent_id, 3);
+            }
+
+            self::$dtyIDDefs[$dtyID] = $allowed_terms;
+
+            /*
+            if ( $dtyID == DT_RELATION_TYPE) {
             //get all root terms (vocabs)
             $allowed_terms = getTermListAll(self::$mysqli, 'relation'); //from db_structure
             self::$dtyIDDefs[$dtyID] = $allowed_terms;
 
-        } else {
+            } else {
 
             $terms = getTermsFromFormat($defs); //db_structure
-            
+
             if (($cntTrm = count($terms)) > 0) {
 
-                if ($cntTrm == 1) {  //vocabulary
-                    $vocabId = $terms[0];
-                    $terms = getTermOffspringList(self::$mysqli, $vocabId); //db_structure
-                    array_push($terms, $vocabId);
-                    
-                }else{
-                    $nonTerms = getTermsFromFormat($defs_nonsel); //from db_structure
-                    if (count($nonTerms) > 0) {
-                        $terms = array_diff($terms, $nonTerms);
-                    }
-                }
-                if (count($terms)<1) {
-                    $allowed_terms = "all";
-                }else{
-                    $allowed_terms = $terms;
-                }
+            if ($cntTrm == 1) {  //vocabulary
+            $vocabId = $terms[0];
+            $terms = getTermOffspringList(self::$mysqli, $vocabId); //db_structure
+            array_push($terms, $vocabId);
 
-                if($dtyID!=null){ //keep for future use
-                    self::$dtyIDDefs[$dtyID] = $allowed_terms;
-                }
+            }else{
+            $nonTerms = getTermsFromFormat($defs_nonsel); //from db_structure
+            if (count($nonTerms) > 0) {
+            $terms = array_diff($terms, $nonTerms);
+            }
+            }
+            if (count($terms)<1) {
+            $allowed_terms = "all";
+            }else{
+            $allowed_terms = $terms;
+            }
+
+            if($dtyID!=null){ //keep for future use
+            self::$dtyIDDefs[$dtyID] = $allowed_terms;
+            }
 
             }
+            }
+            */        
+        }else{
+            //take from cache
+            $allowed_terms = self::$dtyIDDefs[$dtyID];
         }
-*/        
-    }else{
-        //take from store 
-        $allowed_terms = self::$dtyIDDefs[$dtyID];
+        return $allowed_terms;
     }
-    return $allowed_terms;
-}
 
-//
-// return term id with given label in given vocabulary 
-//
-public static function hasVocabGivenLabel($vocab_id, $label){
+    //
+    // return term id with given label in given vocabulary 
+    //
+    public static function hasVocabGivenLabel($vocab_id, $label){
 
         if(self::$terms == null){
-               self::$terms = dbs_GetTerms(self::$system); 
-               self::$dbs_terms = new DbsTerms(self::$system, self::$terms);
+            self::$terms = dbs_GetTerms(self::$system); 
+            self::$dbs_terms = new DbsTerms(self::$system, self::$terms);
         }  
-        
+
         return self::$dbs_terms->getTermByLabel($vocab_id, $label);
-}
+    }
 
 
 /**
@@ -173,14 +196,25 @@ public static function hasVocabGivenLabel($vocab_id, $label){
 *
 * @param mixed $defs    - json or list of allowed terms (or vocabulary term id)
 * @param mixed $defs_nonsel - list of terms that are not selectable
-* @param mixed $id - term id
+* @param mixed $trmID - term id
 * @param mixed $dtyID - detail type id
 */
-public static function isValidTerm($defs, $defs_nonsel, $id, $dtyID){
+public static function isValidTerm($trmID, $dtyID, $terms_ids=null, $terms_nonsel=null){
 
-    $allowed_terms = self::getAllowedTerms($defs, $defs_nonsel, $dtyID);
+    if(!$terms_ids){
+        
+        $dtype = getDetailType(self::$system, self::$detailtypes, $dtyID); //from dbs_structure
+        if ($dtype) {
+            $idx = self::$detailtypes['fieldNamesToIndex']['dty_JsonTermIDTree'];
+            $terms_ids = @$dtype[$idx];
+            $idx = self::$detailtypes['fieldNamesToIndex']['dty_TermIDTreeNonSelectableIDs']; //not used
+            $terms_nonsel = @$dtype[$idx];
+        }
+    }
     
-    return $allowed_terms && ($allowed_terms === "all" || in_array($id, $allowed_terms));
+    $allowed_terms = self::getAllowedTerms($terms_ids, $terms_nonsel, $dtyID);
+    
+    return $allowed_terms && ($allowed_terms === "all" || in_array($trmID, $allowed_terms));
 }
 
 /**
@@ -320,33 +354,50 @@ public static function isValidTermCode($defs, $defs_nonsel, $code, $dtyID){
 
 //-------------------------------------
 //
-// verify that given record $rec_id is a rectype that suits $constraints
+// verify that given record $rec_ID is a rectype $rty_ID that suits $constraints in base field $dty_ID
 // 
-public static function isValidPointer($constraints, $rec_id, $dtyID ){
+public static function isValidPointer( $rec_ID, $dty_ID, $rty_ID, $constraints=null ){
 
     $isvalid = false;
     
-    if(isset($rec_id) && is_numeric($rec_id) && $rec_id>0){
-        
-        self::initialize();
-        
-        $tempRtyID = mysql__select_value( self::$mysqli, "select rec_RecTypeID from Records where rec_ID = ".$rec_id);
+    self::initialize();
     
-        if ($tempRtyID>0){
-
-                $allowed_types = "all";
-                if ($constraints!=null && $constraints != "") {
-                    $temp = explode(",",$constraints); //get allowed record types
-                    if (count($temp)>0) {
-                        $allowed_types = $temp;
+    if(isset($rec_ID) && is_numeric($rec_ID) && $rec_ID>0){
+        $rty_ID = mysql__select_value( self::$mysqli, 'select rec_RecTypeID from Records where rec_ID = '.$rec_ID);
+    }
+    
+    if ($rty_ID>0){
+        
+            if($constraints=='any'){
+                $isvalid = true; //just check that record exists
+            }else{
+                
+                $allowed_types = 'any';
+                
+                if ($constraints==null || $constraints == '') {
+                    
+                    $dtype = getDetailType(self::$system, self::$detailtypes, $dty_ID); //from dbs_structure
+                    
+                    if ($dtype) {
+                        $idx = self::$detailtypes['fieldNamesToIndex']['dty_PtrTargetRectypeIDs'];
+                        $constraints = @$dtype[$idx];
                     }
                 }
-
-                $isvalid = ($allowed_types === "all" || in_array($tempRtyID, $allowed_types));
-        }
+                
+                //get allowed record types
+                $temp = is_array($constraints)?$constraints:explode(',',@$constraints); 
+                if (count($temp)>0) {
+                    $allowed_types = $temp;
+                }
+                
+                $isvalid = ($allowed_types === 'any' || in_array($rty_ID, $allowed_types));
+            }
     }
+    
     return $isvalid;
 }
 
+
 }
 ?>
+

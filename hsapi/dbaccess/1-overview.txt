@@ -30,6 +30,10 @@ Updated:     18 Oct 2015
 * See the License for the specific language governing permissions and limitations under the License.
 */
 
+recordsSave.php - Class to add/update/delete Heurist records
+
+
+
 
 db_files.php  - working with recUploadedFiles download by id, print player tag, get file info  -> static class RecFile
 
@@ -47,5 +51,5 @@ utils_db_load_script.php  - run dump script
 
 ---
 
-file_download.php - interface to get file -> move to controller
-rt_icon.php - rectype and term icons  -> move to controller, merge with fileGet.php
+file_download.php - interface to get file -> moveD to controller
+rt_icon.php - rectype and term icons  -> moveD to controller, mergeD with fileGet.php

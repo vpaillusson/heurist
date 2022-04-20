@@ -656,7 +656,7 @@ function output_CSV($system, $data, $params){
 
                             $all_terms = $defRecTypes['typedefs'][$rty_ID]['dtFields'][$dt_id][$idx_term_tree];
                             $nonsel_terms = $defRecTypes['typedefs'][$rty_ID]['dtFields'][$dt_id][$idx_term_nosel];
-                            $is_allowed = VerifyValue::isValidTerm($all_terms, $nonsel_terms, $relation->trmID, $dt_id);    
+                            $is_allowed = VerifyValue::isValidTerm($relation->trmID, $dt_id, $all_terms, $nonsel_terms);    
 
                             if($is_allowed){
                                 //if record type among selected -  add record to list to be exported
@@ -684,7 +684,7 @@ function output_CSV($system, $data, $params){
 
                             $all_terms = $defRecTypes['typedefs'][$source_rt]['dtFields'][$dt_id][$idx_term_tree];
                             $nonsel_terms = $defRecTypes['typedefs'][$source_rt]['dtFields'][$dt_id][$idx_term_nosel];
-                            $is_allowed = VerifyValue::isValidTerm($all_terms, $nonsel_terms, $relation->trmID, $dt_id);    
+                            $is_allowed = VerifyValue::isValidTerm($relation->trmID, $dt_id, $all_terms, $nonsel_terms);    
 
                             if($is_allowed){
                                 //if record type among selected -  add record to list to be exported

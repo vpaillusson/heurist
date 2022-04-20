@@ -212,6 +212,19 @@
         return $val;
     }
     
+    //
+    //
+    //
+    function sanitizeURL($url){
+        if($url!=null && trim($url)!=''){
+            $url = filter_var($url, FILTER_SANITIZE_URL);
+            if(filter_var($url, FILTER_VALIDATE_URL)){
+                return $url;
+            }
+        }
+        return null;
+    }
+    
     // @todo
     // redirect request to remote heurist server 
     //

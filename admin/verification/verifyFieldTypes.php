@@ -163,7 +163,7 @@ function getInvalidFieldTypes($mysqli, $rectype_id){
                         }
                 }else{
                     //check that default term belongs to vocabulary
-                    if(!VerifyValue::isValidTerm($row['dty_JsonTermIDTree'], null, $row['rst_DefaultValue'], $dtyID )){
+                    if(!VerifyValue::isValidTerm($row['rst_DefaultValue'], $dtyID, $row['dty_JsonTermIDTree'] )){
                         $reason = ' Value does not belong to specified vocabulary';
                     }
                 }

@@ -45,6 +45,8 @@ detectLargeInputs('COOKIE record_edit', $_COOKIE);
         }else{
             
             $action = @$_REQUEST['a'];// || @$_REQUEST['action'];
+            
+            $recordSaver = new RecordsSave( $system );
 
             // call function from db_record library
             // these function returns standard response: status and data
@@ -62,11 +64,11 @@ detectLargeInputs('COOKIE record_edit', $_COOKIE);
                     $record = $_REQUEST;
                 }
 
-                $response = recordAdd($system, $record);
+                $response = $recordSaver->recordAdd($record);
 
             } else if ($action=="s" || $action=="save") {
 
-                $response = recordSave($system, $_REQUEST);
+                $response = $recordSaver->recordSave($_REQUEST);
 
             } else if ($action=='batch_save') {
 
@@ -76,7 +78,7 @@ detectLargeInputs('COOKIE record_edit', $_COOKIE);
 
                     foreach ($_REQUEST['records'] as $key => $record) {
                         
-                        $response = recordSave($system, $record);
+                        $response = $recordSaver->recordSave($record);
 
                         if(!$response || $response['status'] != HEURIST_OK){
                             break;
@@ -96,15 +98,18 @@ detectLargeInputs('COOKIE record_edit', $_COOKIE);
 
             } else if (($action=="d" || $action=="delete") && @$_REQUEST['ids']){
 
-                $response = recordDelete($system, $_REQUEST['ids'], true, @$_REQUEST['check_links'], @$_REQUEST['rec_RecTypeID'], @$_REQUEST['session']);
+                $response = $recordSaver->recordDelete( $_REQUEST['ids'], true, 
+                                                        @$_REQUEST['check_links'], 
+                                                        @$_REQUEST['rec_RecTypeID'], 
+                                                        @$_REQUEST['session']);
 
             } else if ($action=="access"){
 
-                $response = recordUpdateOwnerAccess($system, $_REQUEST);
+                $response = $recordSaver->recordOwnerAccessUpdate( $_REQUEST );
 
             } else if ($action=="increment"){
 
-                $response = recordGetIncrementedValue($system, $_REQUEST);
+                $response = $recordSaver->recordGetIncrementedValue( $_REQUEST );
                 
             } else if ($action=="duplicate" && @$_REQUEST['id']) {
 
@@ -112,11 +117,12 @@ detectLargeInputs('COOKIE record_edit', $_COOKIE);
                 $mysqli = $system->get_mysqli();
                 $keep_autocommit = mysql__select_value($mysqli, 'SELECT @@autocommit');
                 if($keep_autocommit===true) $mysqli->autocommit(FALSE);
+                
                 if (strnatcmp(phpversion(), '5.5') >= 0) {
                     $mysqli->begin_transaction(MYSQLI_TRANS_START_READ_WRITE);
                 }
 
-                $response = recordDuplicate($system, $_REQUEST['id']);
+                $response = $recordSaver->recordDuplicate( $_REQUEST['id'] );
 
                 if( $response && @$response['status']==HEURIST_OK ){
                     $mysqli->commit();

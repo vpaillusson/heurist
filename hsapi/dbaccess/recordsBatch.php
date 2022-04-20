@@ -38,15 +38,14 @@ require_once (dirname(__FILE__).'/../utilities/titleMask.php');
 * 
 * 
 * detailsAdd - add details 
-* replace
 * detailsReplace - replace + detailsAdd
 * detailsDelete
-* multiAction  - several actions in tuen: add,replace,delete
+* multiAction  - executes actions in queue: add,replace,delete
 * 
+* changeRecordTypeInBatch - Changes rec_RecTypeID in batch
 * addRevercePointerForChild - Adds parent pointer field converts - converts existing 
 *                             records to child record for given rectype/detailtype
-* changeRecordTypeInBatch - Changes rec_RecTypeID in batch
-* 
+* setRecordAsChild  - not implemented
 * extractPDF - extracts PDF file content is put it into DT_EXTRACTED_TEXT field
 * 
 */
@@ -564,7 +563,7 @@ error_log('count '.count($childNotFound).'  '.count($toProcess).'  '.print_r(  $
     }
 
     /**
-    * Executes several actions in turn 
+    * Executes several actions in queue 
     * Queue is defined in "actions" parameter 
     * Supports add,replace,delete
     */
@@ -1413,18 +1412,6 @@ error_log('count '.count($childNotFound).'  '.count($toProcess).'  '.print_r(  $
         }
     }
     
-/*    
-public methods
-
-    detailsAdd
-    detailsReplace
-    detailsDelete
-    changeRecordTypeInBatch    
-    addRevercePointerForChild
-    setRecordAsChild
-    extractPDF
-    -------------
-*/
 
 // all tags routine must be in dbUsrTags
     /*

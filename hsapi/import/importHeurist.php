@@ -1487,7 +1487,7 @@ private static function validateEnumeration($recTypeID, $dt_id, $term_value, $db
 
         $is_termid = false;
         if(ctype_digit($r_value2)){ //value is numeric try to compare with trm_ID
-            $is_termid = VerifyValue::isValidTerm( $dt_def[$idx_term_tree], $dt_def[$idx_term_nosel], $r_value2, $dt_id);
+            $is_termid = VerifyValue::isValidTerm( $r_value2, $dt_id, $dt_def[$idx_term_tree], $dt_def[$idx_term_nosel]);
         }
 
         if($is_termid){

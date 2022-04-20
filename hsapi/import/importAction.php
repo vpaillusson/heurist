@@ -24,7 +24,7 @@
 * See the License for the specific language governing permissions and limitations under the License.
 */
 require_once(dirname(__FILE__)."/../../admin/verification/verifyValue.php");
-require_once(dirname(__FILE__)."/../../hsapi/dbaccess/db_records.php");
+require_once(dirname(__FILE__)."/../../hsapi/dbaccess/recordsSave.php");
 require_once(dirname(__FILE__)."/../../hsapi/utilities/utils_geo.php");
 
 require_once (dirname(__FILE__).'/../../vendor/autoload.php'); //for geoPHP
@@ -1693,7 +1693,7 @@ private static function validateEnumerations($query, $imp_session, $fields_check
 
                     $is_termid = false;
                     if(ctype_digit($r_value2)){ //value is numeric try to compare with trm_ID
-                        $is_termid = VerifyValue::isValidTerm( $dt_def[$idx_term_tree], $dt_def[$idx_term_nosel], $r_value2, $dt_id);
+                        $is_termid = VerifyValue::isValidTerm( $r_value2, $dt_id,  $dt_def[$idx_term_tree], $dt_def[$idx_term_nosel]);
                     }
 
                     if($is_termid){
@@ -1798,7 +1798,7 @@ private static function validateResourcePointers($mysqli, $query, $imp_session,
                 $r_value2 = super_trim($r_value);
                 if(!($r_value2=='' || $r_value2=='NULL' || $r_value2<0)){        // && $r_value2>0
 
-                    if (!VerifyValue::isValidPointer($dt_def[$idx_pointer_types], $r_value2, $dt_id ))
+                    if (!VerifyValue::isValidPointer($r_value2, $dt_id, null, $dt_def[$idx_pointer_types] ))
                     {//not found
                         $is_error = true;
                         array_push($newvalue, "<font color='red'>".$r_value."</font>");
@@ -2164,13 +2164,15 @@ private static function doInsertUpdateRecord($recordId, $import_table, $recordTy
                                                                     $details, $id_field, $old_id_in_idfield, $mode_output,
                                                                     $ignore_errors){
 
+    $recordSaver = new RecordsSave(self::$system);
+                                                                        
     //check permission beforehand
     if($recordId>0){
         
         $ownerid = null;
         $access = null;
         $rectypes = array();
-        if(!recordCanChangeOwnerwhipAndAccess(self::$system, $recordId, $ownerid, $access, $rectypes)){
+        if(!$recordSaver->recordOwnerAccessCheck($recordId, $ownerid, $access, $rectypes)){
             // error message: $res;
             self::$rep_permission++;
             return null;
@@ -2189,7 +2191,7 @@ private static function doInsertUpdateRecord($recordId, $import_table, $recordTy
     $record['details'] = $details;
     
     //DEBUG 
-    $out = recordSave(self::$system, $record, false);  //see db_records.php
+    $out = $recordSaver->recordSave( $record, false );  
     //$out = array('status'=>HEURIST_OK, 'data'=>$recordId);
     //$out = array('status'=>HEURIST_ERROR, 'message'=>'Fake error message');
     
@@ -2693,7 +2695,7 @@ public static function performImport($params, $mode_output){
 
                                     //value is numeric - check for trm_ID    
                                     if(ctype_digit($r_value)
-                                    && VerifyValue::isValidTerm( $ft_vals[$idx_term_tree], $ft_vals[$idx_term_nosel], $r_value, $field_type)){
+                                    && VerifyValue::isValidTerm( $r_value, $field_type, $ft_vals[$idx_term_tree], $ft_vals[$idx_term_nosel])){
 
                                         $value = $r_value;
                                     }
@@ -2710,7 +2712,7 @@ public static function performImport($params, $mode_output){
                             }
                             else if($fieldtype_type == "resource"){
 
-                                if(!VerifyValue::isValidPointer(null, $r_value, $field_type)){
+                                if(!VerifyValue::isValidPointer($r_value, $field_type, null, 'any')){
                                      $value  = null;
                                 }else{
                                      $value = $r_value;

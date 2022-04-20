@@ -144,7 +144,7 @@ class DbUsrRecPermissions extends DbEntityBase
     // at the moment we assign only "view" permissions
     // thus, check whether current user can change/edit the record
     // 
-    // similar see recordCanChangeOwnerwhipAndAccess
+    // similar see recordOwnerAccessCheck
     //
     protected function _validatePermission(){
         
